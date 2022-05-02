@@ -39,16 +39,13 @@ parser.parseString( mediaXml, async function ( err, result ) {
             }
             saveWithRelativePath( url, toBuffer( image ) );
         };
-        backoff( getImage, function ( err, addresses, priorErrors ) {
+        backoff( getImage, ( err, addresses, priorErrors ) => {
             if ( err ) {
                 // do something to recover from this error
                 return;
             }
-
             // do something with addresses
             console.log( addresses );
-
-            console.log( '. . . Done' );
         } );
     }
 } );
