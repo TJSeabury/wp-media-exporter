@@ -19,7 +19,6 @@ const xml2js = require( 'xml2js' );
 const parser = new xml2js.Parser(/* options */ );
 
 const mediaPath = path.resolve( __dirname, 'sweitzerconstruction.WordPress.2022-05-02.xml' );
-//const mediaPath = path.resolve( __dirname, 'test.xml' );
 const mediaXml = fs.readFileSync( mediaPath );
 
 parser.parseString( mediaXml, async function ( err, result ) {
