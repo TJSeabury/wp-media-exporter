@@ -1,0 +1,16 @@
+{
+    "name": "wp_get_media_export",
+    "version": "1.0.0",
+    "type": "module",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "node-fetch": "^3.2.4",
+        "xml2js": "^0.4.23"
+    }
+}
