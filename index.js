@@ -32,7 +32,6 @@ parser.parseString( mediaXml, async function ( err, result ) {
     for ( const item of result.rss.channel[0].item ) {
         const getImage = async () => {
             const url = ( item?.['wp:attachment_url']?.[0] ).trim();
-            console.log( `Getting ${url} . . .` );
             const image = await ( await ( await fetch( url ) )?.blob() )?.arrayBuffer();
             if ( !url || !image ) {
                 console.error( 'Failed on: ', url, image );
