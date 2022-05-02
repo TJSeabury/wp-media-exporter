@@ -27,8 +27,10 @@ const mediaPath = path.resolve( __dirname, 'sweitzerconstruction.WordPress.2022-
 const mediaXml = fs.readFileSync( mediaPath );
 
 parser.parseString( mediaXml, async function ( err, result ) {
-    console.log( `Processing ${result.rss.channel[0].item
-        .length} items . . .` );
+    const nItems = result.rss.channel[0].item
+        .length;
+    console.log( `Processing ${nItems} items . . .` );
+    let n = 0;
     for ( const item of result.rss.channel[0].item ) {
         const getImage = async () => {
             const url = ( item?.['wp:attachment_url']?.[0] ).trim();
@@ -37,6 +39,7 @@ parser.parseString( mediaXml, async function ( err, result ) {
                 console.error( 'Failed on: ', url, image );
                 return;
             }
+            console.log( `Item ${++n} of ${nItems}` );
             saveWithRelativePath( url, toBuffer( image ) );
         };
         backoff( getImage, ( err, addresses, priorErrors ) => {
