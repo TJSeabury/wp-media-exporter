@@ -6,9 +6,14 @@ import { fileURLToPath } from 'url';
 // Bring in the ability to create the 'require' method
 import { createRequire } from "module";
 
-
 // construct the require method
 const require = createRequire( import.meta.url );
+
+const backoff = require( 'oibackoff' ).backoff( {
+    algorithm: 'exponential',
+    delayRatio: 0.4,
+    maxTries: 6,
+} );
 
 // Solves: "__dirname is not defined in ES module scope"
 const __filename = fileURLToPath( import.meta.url );
@@ -22,15 +27,31 @@ const mediaPath = path.resolve( __dirname, 'sweitzerconstruction.WordPress.2022-
 const mediaXml = fs.readFileSync( mediaPath );
 
 parser.parseString( mediaXml, async function ( err, result ) {
+    console.log( `Processing ${result.rss.channel[0].item
+        .length} items . . .` );
     for ( const item of result.rss.channel[0].item ) {
-        const url = ( item?.['wp:attachment_url']?.[0] ).trim();
+        const getImage = async () => {
+            const url = ( item?.['wp:attachment_url']?.[0] ).trim();
+            console.log( `Getting ${url} . . .` );
+            const image = await ( await ( await fetch( url ) )?.blob() )?.arrayBuffer();
+            if ( !url || !image ) {
+                console.error( 'Failed on: ', url, image );
+                return;
+            }
+            saveWithRelativePath( url, toBuffer( image ) );
+        };
+        backoff( getImage, function ( err, addresses, priorErrors ) {
+            if ( err ) {
+                // do something to recover from this error
+                return;
+            }
 
-        const image = await ( await ( await fetch( url ) ).blob() ).arrayBuffer();
+            // do something with addresses
+            console.log( addresses );
 
-        saveWithRelativePath( url, toBuffer( image ) );
-
+            console.log( '. . . Done' );
+        } );
     }
-    console.log( 'Done' );
 } );
 
 function toBuffer ( ab ) {
@@ -43,7 +64,7 @@ function toBuffer ( ab ) {
 }
 
 function schemaFromUrl ( path ) {
-    const reg = /^https?:\/\/w{3}?\.?(\w+?\.com)\/([\w\-\/]+?)\/([\w\-]+.(?:jpg|jpeg|png|tif|webp))$/g;
+    const reg = /^https?:\/\/w{3}?\.?(\w+?\.com)\/([\w\-\/]+?)\/([\w\-\.]+.(?:jpg|jpeg|png|tif|webp))$/g;
     let matches = [];
     const match = reg.exec( path );
     if ( match !== null ) {
@@ -59,7 +80,11 @@ function schemaFromUrl ( path ) {
 
 function saveWithRelativePath ( url, data ) {
     const schema = schemaFromUrl( url );
-    const domainDir = path.resolve( __dirname, schema?.domain );
+    if ( !schema ) {
+        console.log( `Failed to schematize ${url} !` );
+        return;
+    }
+    const domainDir = path.resolve( __dirname, schema.domain );
     if ( !fs.existsSync( domainDir ) ) fs.mkdirSync( domainDir );
     let wd = domainDir;
     for ( const dir of schema?.dirPath ) {
